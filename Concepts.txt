@@ -1,0 +1,16 @@
+Entity Framework Core:
+1. Database First Approach : Uses Scaffolding
+2. Code First Approach : Uses Migrations
+
+Models Creation:
+1. In order to show selected data, models are created which are then mapped to the controllers.
+
+Repositories:
+1. For DI to take place, IServices and Services are created.
+2. The services should be created to avoid repeating common services each time.
+3. These services are called from the Controllers.
+
+Dependency Injection:
+1. Transient : Every time a new instance is created.
+2. Scoped : The instance is created once for every client request.
+3. Singleton : The instance remains same throughout the application.
