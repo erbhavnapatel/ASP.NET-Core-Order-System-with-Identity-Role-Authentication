@@ -26,7 +26,7 @@ namespace Customer_Supplier_Authentication.Controllers
 
         // GET: api/<SupplierController>
         [HttpGet]
-        [Route("~/view-all-orders")]
+        [Route("view-all-orders")]
         public async Task<List<OrderModel>> GetAllOrders()
         {
             return await _orderRepository.GetOrders();
@@ -34,7 +34,7 @@ namespace Customer_Supplier_Authentication.Controllers
 
         // GET: api/<SupplierController>/5
         [HttpGet]
-        [Route("~/view-all-products")]
+        [Route("view-all-products")]
         public async Task<List<ProductModel>> GetAllProducts()
         {
             return await _productRepository.GetProducts();

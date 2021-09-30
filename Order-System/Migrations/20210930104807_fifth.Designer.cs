@@ -4,14 +4,16 @@ using Customer_Supplier_Authentication.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Order_System.Migrations
 {
     [DbContext(typeof(OrderDatabaseContext))]
-    partial class OrderDatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20210930104807_fifth")]
+    partial class fifth
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -21,3 +21,5 @@ Authentication
 14.Add Migration
 15.Add Areas
 16.Add Authentication Models
+17.Add Authenticate Controller
+18.Add JWT in Startup

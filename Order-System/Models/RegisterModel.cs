@@ -9,12 +9,12 @@ namespace Order_System.Models
     public class RegisterModel
     {
         [Required(ErrorMessage = "Id is required")]
-        public string AppUserId { get; set; }
+        public string UserId { get; set; }
 
         [Required(ErrorMessage = "Name is required")]
-        public int Name { get; set; }
+        public string Name { get; set; }
 
         [Required(ErrorMessage = "Password is required")]
-        public string AppUserPassword { get; set; }
+        public string Password { get; set; }
     }
 }
