@@ -3,6 +3,7 @@ using Customer_Supplier_Authentication.Repositories;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -31,6 +32,10 @@ namespace Order_System
         {
             services.AddControllers();
             services.AddDbContext<OrderDatabaseContext>(op => op.UseSqlServer(Configuration.GetConnectionString("Default")));
+
+            services.AddIdentity<IdentityUser, IdentityRole>()
+                .AddRoles<IdentityRole>()
+                .AddEntityFrameworkStores<OrderDatabaseContext>();
 
             services.AddSwaggerGen(c =>
             {

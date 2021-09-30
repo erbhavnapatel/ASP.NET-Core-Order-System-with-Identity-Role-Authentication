@@ -14,3 +14,10 @@ Dependency Injection
 
 Swagger
 11.Add Swashbuckle
+
+Authentication
+12.Change DbContext to IdentityDbContext
+13.Add identity in Startup
+14.Add Migration
+15.Add Areas
+16.Add Authentication Models
