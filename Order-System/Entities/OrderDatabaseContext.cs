@@ -1,14 +1,13 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Order_System.Areas.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Customer_Supplier_Authentication.Entities
+namespace Order_System.Entities
 {
-    public class OrderDatabaseContext : IdentityDbContext
+    public class OrderDatabaseContext : DbContext
     {
         public OrderDatabaseContext()
         {
@@ -25,7 +24,7 @@ namespace Customer_Supplier_Authentication.Entities
         public virtual DbSet<Supplier> Supplier { get; set; }
 
 
-        public virtual DbSet<ApplicationUser> ApplicationUsers { get; set; }
+        //public virtual DbSet<ApplicationUser> ApplicationUsers { get; set; }
 
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

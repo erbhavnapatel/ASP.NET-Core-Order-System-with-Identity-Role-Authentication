@@ -1,12 +1,12 @@
-﻿using Customer_Supplier_Authentication.Entities;
-using Customer_Supplier_Authentication.Models;
+﻿using Order_System.Entities;
+using Order_System.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Customer_Supplier_Authentication.Repositories
+namespace Order_System.Repositories
 {
     public class ProductRepository : IProductRepository
     {

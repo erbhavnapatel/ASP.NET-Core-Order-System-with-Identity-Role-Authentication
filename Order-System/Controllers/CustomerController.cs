@@ -1,6 +1,7 @@
-﻿using Customer_Supplier_Authentication.Entities;
-using Customer_Supplier_Authentication.Models;
-using Customer_Supplier_Authentication.Repositories;
+﻿using Order_System.Entities;
+using Order_System.Models;
+using Order_System.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -13,6 +14,7 @@ namespace Customer_Supplier_Authentication.Controllers
 {
     [Route("[controller]/[action]")]
     [ApiController]
+    [Authorize]
     public class CustomerController : ControllerBase
     {
         private readonly IOrderRepository _orderRepository;

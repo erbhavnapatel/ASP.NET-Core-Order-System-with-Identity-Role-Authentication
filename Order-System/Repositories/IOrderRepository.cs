@@ -1,16 +1,16 @@
-﻿using Customer_Supplier_Authentication.Entities;
-using Customer_Supplier_Authentication.Models;
+﻿using Order_System.Entities;
+using Order_System.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Customer_Supplier_Authentication.Repositories
+namespace Order_System.Repositories
 {
     public interface IOrderRepository
     {
-        public Task<Order> FindOrderById(int orderId);
-        public Task<List<OrderModel>> GetOrders();
-        public Task<Order> DeleteOrder(int orderId);
+        Task<Order> FindOrderById(int orderId);
+        Task<List<OrderModel>> GetOrders();
+        Task<Order> DeleteOrder(int orderId);
     }
 }

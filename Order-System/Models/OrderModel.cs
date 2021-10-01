@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Customer_Supplier_Authentication.Models
+namespace Order_System.Models
 {
     public class OrderModel
     {
