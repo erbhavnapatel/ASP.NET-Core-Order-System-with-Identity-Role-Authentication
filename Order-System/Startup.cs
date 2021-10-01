@@ -18,6 +18,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Order_System.Repositories.Authentication;
 
 namespace Order_System
 {
@@ -43,96 +45,69 @@ namespace Order_System
 
             services.AddSwaggerGen(c =>
             {
-                ////This is to generate the Default UI of Swagger Documentation  
-                //c.SwaggerDoc("v1", new OpenApiInfo
-                //{
-                //    Version = "v1",
-                //    Title = "Order-System-Application",
-                //    Description = "ASP.NET Core 3.1 Web API"
-                //});
+                //This is to generate the Default UI of Swagger Documentation  
+                c.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Version = "v1",
+                    Title = "Order-System-Application",
+                    Description = "ASP.NET Core 3.1 Web API"
+                });
 
-                //// To Enable authorization using Swagger (JWT)  
-                //c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
-                //{
-                //    Name = "Authorization",
-                //    Type = SecuritySchemeType.ApiKey,
-                //    Scheme = "Bearer",
-                //    BearerFormat = "JWT",
-                //    In = ParameterLocation.Header,
-                //    Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n Enter 'Bearer' [space] and then your token in the text input below.\r\n\r\nExample: \"Bearer 12345abcdef\"",
-                //});
+                // To Enable authorization using Swagger (JWT)  
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+                {
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer",
+                    BearerFormat = "JWT",
+                    In = ParameterLocation.Header,
+                    Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n Enter 'Bearer' [space] and then your token in the text input below.\r\n\r\nExample: \"Bearer 12345abcdef\"",
+                });
 
-                //c.AddSecurityRequirement(new OpenApiSecurityRequirement
-                //{
-                //    {
-                //          new OpenApiSecurityScheme
-                //            {
-                //                Reference = new OpenApiReference
-                //                {
-                //                    Type = ReferenceType.SecurityScheme,
-                //                    Id = "Bearer"
-                //                }
-                //            },
-                //            new string[] {}
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                          new OpenApiSecurityScheme
+                            {
+                                Reference = new OpenApiReference
+                                {
+                                    Type = ReferenceType.SecurityScheme,
+                                    Id = "Bearer"
+                                }
+                            },
+                            new string[] {}
 
-                //    }
-                //});
+                    }
+                });
 
             });
 
-        //    services.AddTransient<IOrderRepository, OrderRepository>();
-        //    services.AddTransient<IProductRepository, ProductRepository>();
+            services.AddScoped<IOrderRepository, OrderRepository>();
+            services.AddScoped<IProductRepository, ProductRepository>();
 
-        //    //Inject AppSettings
-        //    services.Configure<ApplicationSettings>(Configuration.GetSection("ApplicationSettings"));
+            services.AddTransient<IUserRepository, UserRepository>();
+            services.AddTransient<ITokenRepository, TokenRepository>();
 
-        //    services.Configure<IdentityOptions>(options =>
-        //    {
-        //        options.Password.RequireDigit = false;
-        //        options.Password.RequireNonAlphanumeric = false;
-        //        options.Password.RequireLowercase = false;
-        //        options.Password.RequireUppercase = false;
-        //        options.Password.RequiredLength = 7;
-        //    });
-
-        //    //Jwt Authentication
-
-        //    var key = Encoding.UTF8.GetBytes(Configuration["ApplicationSettings:JWT_Secret"].ToString());
-
-        //    services.AddAuthentication(x =>
-        //    {
-        //        x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        //        x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        //        x.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-        //    })
-        //        .AddJwtBearer(x =>
-        //        {
-        //            x.RequireHttpsMetadata = false;
-        //            x.SaveToken = false;
-        //            x.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-        //            {
-        //                ValidateIssuerSigningKey = true,
-        //                IssuerSigningKey = new SymmetricSecurityKey(key),
-        //                ValidateIssuer = false,
-        //                ValidateAudience = false,
-        //                ClockSkew = TimeSpan.Zero
-        //            };
-        //        });
+            // Jwt Authentication
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = Configuration["Jwt:Issuer"],
+                    ValidAudience = Configuration["Jwt:Issuer"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Jwt:Key"]))
+                };
+            });
 
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IServiceProvider serviceProvider)
         {
-            //app.Use(async (ctx, next) =>
-            //{
-            //    await next();
-            //    if (ctx.Response.StatusCode == 204)
-            //    {
-            //        ctx.Response.ContentLength = 0;
-            //    }
-            //});
-
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -148,6 +123,16 @@ namespace Order_System
             app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            app.Use(async (context, next) =>
+            {
+                var token = context.Session.GetString("Token");
+                if (!string.IsNullOrEmpty(token))
+                {
+                    context.Request.Headers.Add("Authorization", "Bearer " + token);
+                }
+                await next();
+            });
 
             app.UseAuthentication();
             app.UseAuthorization();
