@@ -80,7 +80,7 @@ namespace Order_System.Controllers
         [HttpPost]
         public async Task<IActionResult> Register([FromBody] RegisterModel model)
         {
-            var userExists = await userManager.FindByIdAsync(model.AppUserId);
+            var userExists = await userManager.FindByIdAsync(model.UserId);
             if (userExists != null)
                 return StatusCode(StatusCodes.Status500InternalServerError,
                     new Response
