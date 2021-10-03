@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Order_System.Entities
 {
-    public class OrderDatabaseContext : DbContext
+    public class OrderDatabaseContext : IdentityDbContext
     {
         public OrderDatabaseContext()
         {

@@ -1,110 +1,173 @@
-﻿//using Microsoft.AspNetCore.Authorization;
-//using Microsoft.AspNetCore.Http;
-//using Microsoft.AspNetCore.Mvc;
-//using Microsoft.Extensions.Configuration;
-//using Microsoft.IdentityModel.Tokens;
-//using Order_System.Identity;
-//using Order_System.Models;
-//using Order_System.Repositories.Authentication;
-//using System;
-//using System.Collections.Generic;
-//using System.IdentityModel.Tokens.Jwt;
-//using System.Linq;
-//using System.Text;
-//using System.Threading.Tasks;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using Order_System.Models;
+using Order_System.AuthenticateIdentity;
+using System;
+using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
+using System.Security.Claims;
 
-//namespace Order_System.Controllers
-//{
-//    [Route("[controller]/[action]")]
-//    [ApiController]
-//    public class AccountController : ControllerBase
-//    {
-//        private readonly IConfiguration _config;
-//        private readonly ITokenRepository _tokenRepository;
-//        private readonly IUserRepository _userRepository;
+namespace Order_System.Controllers
+{
+    [Route("[controller]/[action]")]
+    [ApiController]
+    public class AccountController : ControllerBase
+    {
+        private readonly UserManager<ApplicationUser> userManager;
+        private readonly RoleManager<IdentityRole> roleManager;
+        private readonly IConfiguration _configuration;
 
-//        public AccountController(IConfiguration config, ITokenRepository tokenRepository, IUserRepository userRepository)
-//        {
-//            _config = config;
-//            _tokenRepository = tokenRepository;
-//            _userRepository = userRepository;
-//        }
-        
+        public AccountController(UserManager<ApplicationUser> customer, RoleManager<IdentityRole> supplier, IConfiguration configuration)
+        {
+            this.userManager = customer;
+            this.roleManager = supplier;
+            this._configuration = configuration;
+        }
 
-//        [AllowAnonymous]
-//        //[Route("login")]
-//        [HttpPost]
-//        public IActionResult Login(UserModel userModel)
-//        {
-//            if (string.IsNullOrEmpty(userModel.UserId) || string.IsNullOrEmpty(userModel.Password))
-//            {
-//                return (RedirectToAction("Error"));
-//            }
-//            IActionResult response = Unauthorized();
-//            var validUser = GetUser(userModel);
 
-//            if (validUser != null)
-//            {
-//                var generatedToken = _tokenRepository.BuildToken(_config["Jwt:Key"].ToString(), _config["Jwt:Issuer"].ToString(), validUser);
-//                if (generatedToken != null)
-//                {
-//                    return RedirectToAction("MainWindow");
-//                }
-//                else
-//                {
-//                    return (RedirectToAction("Error"));
-//                }
-//            }
-//            else
-//            {
-//                return (RedirectToAction("Error"));
-//            }
-//        }
+        #region Login
 
-//        private User GetUser(UserModel userModel)
-//        {
-//            // Write your code here to authenticate the user     
-//            return _userRepository.GetUser(userModel);
-//        }
+        [HttpPost]
+        public async Task<IActionResult> Login([FromBody] LoginModel model)
+        {
+            var user = await userManager.FindByIdAsync(model.UserId);
+            if (user != null && await userManager.CheckPasswordAsync(user, model.Password))
+            {
+                var userRoles = await userManager.GetRolesAsync(user);
 
-//        [Authorize]
-//        //[Route("mainwindow")]
-//        [HttpGet]
-//        public IActionResult MainWindow()
-//        {
-//            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
-//            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+                var authClaims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.Name, user.UserName),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                };
 
-//            var token = new JwtSecurityToken(_config["Jwt:Issuer"],
-//            _config["Jwt:Issuer"],
-//            null,
-//            expires: DateTime.Now.AddMinutes(120),
-//            signingCredentials: credentials);
+                foreach (var userRole in userRoles)
+                {
+                    authClaims.Add(new Claim(ClaimTypes.Role, userRole));
+                }
 
-//            string tokengen = new JwtSecurityTokenHandler().WriteToken(token);
+                var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
 
-//            if (!_tokenRepository.ValidateToken(_config["Jwt:Key"].ToString(), _config["Jwt:Issuer"].ToString(), token))
-//            {
-//                return BadRequest();
-//            }
+                var token = new JwtSecurityToken(
+                    issuer: _configuration["JWT:ValidIssuer"],
+                    audience: _configuration["JWT:ValidIssuer"],
+                    expires: DateTime.Now.AddHours(1),
+                    claims: authClaims,
+                    signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256));
 
-//            return Ok(new { token = token });
-//        }
+                return Ok(new
+                {
+                    token = new JwtSecurityTokenHandler().WriteToken(token),
+                    expiration = token.ValidTo
+                });
+            }
+            return Unauthorized();
+        }
 
-//        public IActionResult Error()
-//        {
-//            return Unauthorized();
-//        }
+        #endregion
 
-//        private string BuildMessage(string stringToSplit, int chunkSize)
-//        {
-//            var data = Enumerable.Range(0, stringToSplit.Length / chunkSize).Select(i => stringToSplit.Substring(i * chunkSize, chunkSize));
-//            string result = "The generated token is:";
-//            foreach (string str in data)
-//            {
-//                result += Environment.NewLine + str;
-//            }
-//            return result;
-//        }
-//    }
-//}
+
+
+        #region Register
+
+        [HttpPost]
+        public async Task<IActionResult> Register([FromBody] RegisterModel model)
+        {
+            var userExists = await userManager.FindByIdAsync(model.AppUserId);
+            if (userExists != null)
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new Response
+                    {
+                        Status = "Error",
+                        Message = "User already exists"
+                    });
+
+            ApplicationUser user = new ApplicationUser()
+            {
+                //SecurityStamp = Guid.NewGuid().ToString(),
+                UserName = model.Name,
+                PhoneNumber = model.PhoneNumber
+            };
+            var result = await userManager.CreateAsync(user, model.Password);
+            if (!result.Succeeded)
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new Response
+                    {
+                        Status = "Error",
+                        Message = "User creation failed. Please check user details and try again."
+                    });
+
+            return Ok(new Response
+            {
+                Status = "Success",
+                Message = "User created successfully."
+            });
+        }
+
+        #endregion
+
+
+        #region Register-Admin
+
+        [HttpPost]
+        public async Task<IActionResult> RegisterRole([FromBody] RegisterModel model)
+        {
+            var userExists = await userManager.FindByIdAsync(model.UserId);
+            if (userExists != null)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new Response
+                    {
+                        Status = "Error",
+                        Message = "User already exists"
+                    });
+            }
+
+            ApplicationUser user = new ApplicationUser()
+            {
+                //Id = model.CustId,
+                //SecurityStamp = Guid.NewGuid().ToString(),
+                UserName = model.Name,
+                PhoneNumber = model.PhoneNumber
+            };
+
+            var result = await userManager.CreateAsync(user, model.Password);
+            if (!result.Succeeded)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new Response
+                    {
+                        Status = "Error",
+                        Message = "User creation failed. check your data and try again"
+                    });
+            }
+
+            if (!await roleManager.RoleExistsAsync(UserRoles.CustomerRole))
+            {
+                await roleManager.CreateAsync(new IdentityRole(UserRoles.CustomerRole));
+            }
+
+            if (!await roleManager.RoleExistsAsync(UserRoles.SupplierRole))
+            {
+                await roleManager.CreateAsync(new IdentityRole(UserRoles.SupplierRole));
+            }
+
+            return Ok(new Response
+            {
+                Status = "Success",
+                Message = "User created successfully"
+            });
+        }
+
+        #endregion
+
+
+    }
+}
